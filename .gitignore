@@ -1,0 +1,77 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environments
+env/
+venv/
+ENV/
+.venv/
+.ENV/
+myenv/
+.myenv/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# dotenv environment variables
+.env
+.env.*
+!.env.example
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+coverage.xml
+.cache
+.pytest_cache/
+nosetests.xml
+test-results/
+
+# Sphinx documentation
+docs/_build/
+build/
+dist/
+
+# MyPy / Pylint / Pyright / Bandit
+.mypy_cache/
+.dmypy.json
+.pytype/
+.bandit
+
+# VSCode & IDE settings
+.vscode/
+.idea/
+*.code-workspace
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# SQLite DB
+*.sqlite3
+
+# Logs
+*.log
+
+# Lock files
+poetry.lock
+Pipfile.lock
+
+datasets
+datasets/
+/datasets
