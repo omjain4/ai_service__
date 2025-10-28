@@ -198,6 +198,7 @@ def get_manual_outfits(style, height, weight, skin_tone, gender):
 def generate_female_outfits(style, body_type, height_cat, colors):
     weight_cat, height_cat = body_type.split('_')
     print(f"DEBUG: Generating female outfits for style: {style}, weight: {weight_cat}, height: {height_cat}")
+    print(f"DEBUG: Available colors: {colors}")
     
     if style == 'casual':
         # Weight-based tops
@@ -372,6 +373,7 @@ def generate_female_outfits(style, body_type, height_cat, colors):
 def generate_male_outfits(style, body_type, height_cat, colors):
     weight_cat, height_cat = body_type.split('_')
     print(f"DEBUG: Generating male outfits for style: {style}, weight: {weight_cat}, height: {height_cat}")
+    print(f"DEBUG: Available colors: {colors}")
     
     if style == 'casual':
         # Weight-based tops
@@ -510,7 +512,7 @@ def generate_male_outfits(style, body_type, height_cat, colors):
             bottom_name = 'Long Tuxedo Pants'
             shoe_name = 'Patent Derby Shoes'
         
-        return [
+        outfit = [
             {
                 '_id': f'm_formal_{weight_cat}_{height_cat}_1',
                 'name': f'{colors[0].title()} {top_name}',
@@ -536,6 +538,8 @@ def generate_male_outfits(style, body_type, height_cat, colors):
                 'imageUrl': f'https://placehold.co/300x400/000000/white?text={shoe_name.replace(" ", "+")}'
             }
         ]
+        print(f"DEBUG: Generated formal outfit: {[item['name'] for item in outfit]}")
+        return outfit
 
 def generate_unisex_outfits(style, body_type, height_cat, colors):
     if style == 'casual':
