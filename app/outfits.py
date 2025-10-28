@@ -121,6 +121,11 @@ def generate_outfit(payload):
     weight = payload.get('weight')
     body_color = payload.get('body_color', 'Neutral').lower()
     gender = payload.get('gender', 'unisex').lower()
+    
+    print(f"DEBUG: Received {len(wardrobe)} wardrobe items")
+    print(f"DEBUG: Style: {style_preference}, Gender: {gender}, Body color: {body_color}")
+    for i, item in enumerate(wardrobe[:3]):  # Show first 3 items
+        print(f"DEBUG: Item {i}: {item}")
 
     # Re-categorize ALL wardrobe items using trained model
     for item in wardrobe:
@@ -133,11 +138,16 @@ def generate_outfit(payload):
                 preds = model.predict(arr)
                 predicted_category = class_names[np.argmax(preds[0])]
                 item['category'] = predicted_category
-                # Add confidence score
                 item['confidence'] = float(np.max(preds[0]))
+                print(f"DEBUG: Predicted {item.get('name', 'Item')} as {predicted_category}")
             except Exception as e:
-                item['category'] = 'Unknown'
+                print(f"DEBUG: Failed to predict category for {item.get('name', 'Item')}: {e}")
+                item['category'] = 'Tops'  # Default fallback
                 item['confidence'] = 0.0
+        else:
+            # Ensure every item has a category
+            if 'category' not in item or not item['category']:
+                item['category'] = 'Tops'  # Default fallback
 
     # Filter wardrobe by occasion and gender
     def gender_filter(items, gender):
@@ -149,6 +159,8 @@ def generate_outfit(payload):
     all_tops = [item for item in wardrobe if item.get('category') == 'Tops']
     all_bottoms = [item for item in wardrobe if item.get('category') == 'Bottoms']
     all_shoes = [item for item in wardrobe if item.get('category') == 'Shoes']
+    
+    print(f"DEBUG: Found {len(all_tops)} tops, {len(all_bottoms)} bottoms, {len(all_shoes)} shoes")
     
     tops = gender_filter(occasion_filter(all_tops, style_preference), gender)
     bottoms = gender_filter(occasion_filter(all_bottoms, style_preference), gender)
@@ -179,15 +191,13 @@ def generate_outfit(payload):
                         body_type_score(current, height, weight))
                 candidates.append((current, score))
 
+    print(f"DEBUG: Generated {len(candidates)} outfit candidates")
+    
     if not candidates:
-        # Fallback: try without strict filtering
-        all_tops = [item for item in wardrobe if item.get('category') == 'Tops']
-        all_bottoms = [item for item in wardrobe if item.get('category') == 'Bottoms'] 
-        all_shoes = [item for item in wardrobe if item.get('category') == 'Shoes']
-        
         if all_tops and all_bottoms and all_shoes:
             # Pick first available items as fallback
             fallback_outfit = [all_tops[0], all_bottoms[0], all_shoes[0]]
+            print(f"DEBUG: Using fallback outfit")
             return {
                 "userItems": fallback_outfit,
                 "suggestedItems": [],
@@ -196,6 +206,7 @@ def generate_outfit(payload):
             }
         else:
             # Use Gemini as fallback when no items available
+            print(f"DEBUG: No items found, using Gemini fallback")
             from app.gemini_service import get_outfit_recommendations
             gemini_result = get_outfit_recommendations(
                 wardrobe, style_preference, body_color, gender, style_preference
@@ -211,6 +222,7 @@ def generate_outfit(payload):
         best_outfit, best_score = max(candidates, key=lambda x: x[1])
         user_items = best_outfit
         suggested_items = []
+        print(f"DEBUG: Best outfit score: {best_score}")
         
         # Add Gemini suggestions alongside our results
         from app.gemini_service import get_outfit_recommendations
