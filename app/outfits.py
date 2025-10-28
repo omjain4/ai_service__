@@ -122,10 +122,26 @@ def generate_outfit(payload):
     body_color = payload.get('body_color', 'Neutral').lower()
     gender = payload.get('gender', 'unisex').lower()
     
-    print(f"DEBUG: Received {len(wardrobe)} wardrobe items")
-    print(f"DEBUG: Style: {style_preference}, Gender: {gender}, Body color: {body_color}")
-    for i, item in enumerate(wardrobe[:3]):  # Show first 3 items
-        print(f"DEBUG: Item {i}: {item}")
+    # Always use Gemini for outfit generation
+    from app.gemini_service import get_outfit_recommendations_detailed
+    
+    gemini_result = get_outfit_recommendations_detailed(
+        wardrobe=wardrobe,
+        style=style_preference,
+        skin_tone=body_color,
+        gender=gender,
+        occasion=style_preference,
+        height=height,
+        weight=weight
+    )
+    
+    return {
+        "userItems": [],
+        "suggestedItems": [],
+        "score": 1,
+        "gemini_recommendations": gemini_result,
+        "message": "Outfit recommendations powered by Gemini AI"
+    }
 
     # Re-categorize ALL wardrobe items using trained model
     for item in wardrobe:
