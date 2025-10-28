@@ -17,25 +17,85 @@ except Exception as e:
     class_names = []
     print(f"Warning: Model loading failed - {e}. Using defaults for categorization.")
 
-# Expanded virtual catalog (unchanged from before)
+# Expanded virtual catalog with more variety
 VIRTUAL_CATALOG = {
     'Tops': [
+        # Casual Tops
         {'_id': 'vc_top_casual_1', 'name': 'White Cotton T-Shirt', 'category': 'Tops', 'color': 'White', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/ffffff/000000?text=White+T-Shirt'},
+        {'_id': 'vc_top_casual_2', 'name': 'Navy Polo Shirt', 'category': 'Tops', 'color': 'Navy', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/000080/ffffff?text=Navy+Polo'},
+        {'_id': 'vc_top_casual_3', 'name': 'Gray Hoodie', 'category': 'Tops', 'color': 'Gray', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/808080/ffffff?text=Gray+Hoodie'},
+        {'_id': 'vc_top_casual_4', 'name': 'Red Tank Top', 'category': 'Tops', 'color': 'Red', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/ff0000/ffffff?text=Red+Tank'},
+        {'_id': 'vc_top_casual_5', 'name': 'Green Flannel Shirt', 'category': 'Tops', 'color': 'Green', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/008000/ffffff?text=Green+Flannel'},
+        # Work Tops
         {'_id': 'vc_top_work_1', 'name': 'Blue Button-Down Shirt', 'category': 'Tops', 'color': 'Blue', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/0000ff/ffffff?text=Button-Down'},
+        {'_id': 'vc_top_work_2', 'name': 'White Dress Shirt', 'category': 'Tops', 'color': 'White', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/ffffff/000000?text=Dress+Shirt'},
+        {'_id': 'vc_top_work_3', 'name': 'Navy Blazer', 'category': 'Tops', 'color': 'Navy', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/000080/ffffff?text=Navy+Blazer'},
+        {'_id': 'vc_top_work_4', 'name': 'Gray Cardigan', 'category': 'Tops', 'color': 'Gray', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/808080/ffffff?text=Gray+Cardigan'},
+        {'_id': 'vc_top_work_5', 'name': 'Burgundy Blouse', 'category': 'Tops', 'color': 'Burgundy', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/800020/ffffff?text=Burgundy+Blouse'},
+        # Party Tops
         {'_id': 'vc_top_party_1', 'name': 'Sequined Blouse', 'category': 'Tops', 'color': 'Silver', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/c0c0c0/000000?text=Sequined+Blouse'},
+        {'_id': 'vc_top_party_2', 'name': 'Gold Metallic Top', 'category': 'Tops', 'color': 'Gold', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/ffd700/000000?text=Gold+Metallic'},
+        {'_id': 'vc_top_party_3', 'name': 'Black Silk Camisole', 'category': 'Tops', 'color': 'Black', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/000000/ffffff?text=Silk+Camisole'},
+        {'_id': 'vc_top_party_4', 'name': 'Red Velvet Top', 'category': 'Tops', 'color': 'Red', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/ff0000/ffffff?text=Velvet+Top'},
+        {'_id': 'vc_top_party_5', 'name': 'Purple Satin Blouse', 'category': 'Tops', 'color': 'Purple', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/800080/ffffff?text=Satin+Blouse'},
+        # Formal Tops
         {'_id': 'vc_top_formal_1', 'name': 'Black Blazer', 'category': 'Tops', 'color': 'Black', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/000000/ffffff?text=Black+Blazer'},
+        {'_id': 'vc_top_formal_2', 'name': 'Charcoal Suit Jacket', 'category': 'Tops', 'color': 'Charcoal', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/36454f/ffffff?text=Suit+Jacket'},
+        {'_id': 'vc_top_formal_3', 'name': 'Navy Tuxedo', 'category': 'Tops', 'color': 'Navy', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/000080/ffffff?text=Navy+Tuxedo'},
+        {'_id': 'vc_top_formal_4', 'name': 'White Evening Shirt', 'category': 'Tops', 'color': 'White', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/ffffff/000000?text=Evening+Shirt'},
+        {'_id': 'vc_top_formal_5', 'name': 'Burgundy Formal Blouse', 'category': 'Tops', 'color': 'Burgundy', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/800020/ffffff?text=Formal+Blouse'},
     ],
     'Bottoms': [
+        # Casual Bottoms
         {'_id': 'vc_bottom_casual_1', 'name': 'Blue Jeans', 'category': 'Bottoms', 'color': 'Blue', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/0000ff/ffffff?text=Blue+Jeans'},
+        {'_id': 'vc_bottom_casual_2', 'name': 'Black Skinny Jeans', 'category': 'Bottoms', 'color': 'Black', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/000000/ffffff?text=Skinny+Jeans'},
+        {'_id': 'vc_bottom_casual_3', 'name': 'Khaki Chinos', 'category': 'Bottoms', 'color': 'Khaki', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/f0e68c/000000?text=Khaki+Chinos'},
+        {'_id': 'vc_bottom_casual_4', 'name': 'Denim Shorts', 'category': 'Bottoms', 'color': 'Blue', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/4169e1/ffffff?text=Denim+Shorts'},
+        {'_id': 'vc_bottom_casual_5', 'name': 'Gray Sweatpants', 'category': 'Bottoms', 'color': 'Gray', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/808080/ffffff?text=Sweatpants'},
+        # Work Bottoms
         {'_id': 'vc_bottom_work_1', 'name': 'Gray Slacks', 'category': 'Bottoms', 'color': 'Gray', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/808080/ffffff?text=Gray+Slacks'},
+        {'_id': 'vc_bottom_work_2', 'name': 'Navy Dress Pants', 'category': 'Bottoms', 'color': 'Navy', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/000080/ffffff?text=Dress+Pants'},
+        {'_id': 'vc_bottom_work_3', 'name': 'Black Pencil Skirt', 'category': 'Bottoms', 'color': 'Black', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/000000/ffffff?text=Pencil+Skirt'},
+        {'_id': 'vc_bottom_work_4', 'name': 'Charcoal Trousers', 'category': 'Bottoms', 'color': 'Charcoal', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/36454f/ffffff?text=Trousers'},
+        {'_id': 'vc_bottom_work_5', 'name': 'Brown A-Line Skirt', 'category': 'Bottoms', 'color': 'Brown', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/8b4513/ffffff?text=A-Line+Skirt'},
+        # Party Bottoms
         {'_id': 'vc_bottom_party_1', 'name': 'Red Mini Skirt', 'category': 'Bottoms', 'color': 'Red', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/ff0000/ffffff?text=Red+Skirt'},
+        {'_id': 'vc_bottom_party_2', 'name': 'Black Leather Pants', 'category': 'Bottoms', 'color': 'Black', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/000000/ffffff?text=Leather+Pants'},
+        {'_id': 'vc_bottom_party_3', 'name': 'Gold Sequin Skirt', 'category': 'Bottoms', 'color': 'Gold', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/ffd700/000000?text=Sequin+Skirt'},
+        {'_id': 'vc_bottom_party_4', 'name': 'Silver Metallic Shorts', 'category': 'Bottoms', 'color': 'Silver', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/c0c0c0/000000?text=Metallic+Shorts'},
+        {'_id': 'vc_bottom_party_5', 'name': 'Purple Satin Pants', 'category': 'Bottoms', 'color': 'Purple', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/800080/ffffff?text=Satin+Pants'},
+        # Formal Bottoms
         {'_id': 'vc_bottom_formal_1', 'name': 'Black Tailored Pants', 'category': 'Bottoms', 'color': 'Black', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/000000/ffffff?text=Tailored+Pants'},
+        {'_id': 'vc_bottom_formal_2', 'name': 'Charcoal Suit Pants', 'category': 'Bottoms', 'color': 'Charcoal', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/36454f/ffffff?text=Suit+Pants'},
+        {'_id': 'vc_bottom_formal_3', 'name': 'Navy Formal Trousers', 'category': 'Bottoms', 'color': 'Navy', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/000080/ffffff?text=Formal+Trousers'},
+        {'_id': 'vc_bottom_formal_4', 'name': 'Black Evening Skirt', 'category': 'Bottoms', 'color': 'Black', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/000000/ffffff?text=Evening+Skirt'},
+        {'_id': 'vc_bottom_formal_5', 'name': 'Burgundy Dress Pants', 'category': 'Bottoms', 'color': 'Burgundy', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/800020/ffffff?text=Dress+Pants'},
     ],
     'Shoes': [
+        # Casual Shoes
         {'_id': 'vc_shoes_casual_1', 'name': 'White Sneakers', 'category': 'Shoes', 'color': 'White', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/ffffff/000000?text=White+Sneakers'},
+        {'_id': 'vc_shoes_casual_2', 'name': 'Black Canvas Shoes', 'category': 'Shoes', 'color': 'Black', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/000000/ffffff?text=Canvas+Shoes'},
+        {'_id': 'vc_shoes_casual_3', 'name': 'Blue Running Shoes', 'category': 'Shoes', 'color': 'Blue', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/0000ff/ffffff?text=Running+Shoes'},
+        {'_id': 'vc_shoes_casual_4', 'name': 'Brown Sandals', 'category': 'Shoes', 'color': 'Brown', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/8b4513/ffffff?text=Sandals'},
+        {'_id': 'vc_shoes_casual_5', 'name': 'Gray Slip-Ons', 'category': 'Shoes', 'color': 'Gray', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/808080/ffffff?text=Slip-Ons'},
+        # Work Shoes
         {'_id': 'vc_shoes_work_1', 'name': 'Brown Loafers', 'category': 'Shoes', 'color': 'Brown', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/8b4513/ffffff?text=Loafers'},
+        {'_id': 'vc_shoes_work_2', 'name': 'Black Pumps', 'category': 'Shoes', 'color': 'Black', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/000000/ffffff?text=Black+Pumps'},
+        {'_id': 'vc_shoes_work_3', 'name': 'Navy Flats', 'category': 'Shoes', 'color': 'Navy', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/000080/ffffff?text=Navy+Flats'},
+        {'_id': 'vc_shoes_work_4', 'name': 'Burgundy Oxfords', 'category': 'Shoes', 'color': 'Burgundy', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/800020/ffffff?text=Oxfords'},
+        {'_id': 'vc_shoes_work_5', 'name': 'Gray Block Heels', 'category': 'Shoes', 'color': 'Gray', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/808080/ffffff?text=Block+Heels'},
+        # Party Shoes
         {'_id': 'vc_shoes_party_1', 'name': 'Gold Heels', 'category': 'Shoes', 'color': 'Gold', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/ffd700/000000?text=Gold+Heels'},
+        {'_id': 'vc_shoes_party_2', 'name': 'Silver Stilettos', 'category': 'Shoes', 'color': 'Silver', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/c0c0c0/000000?text=Stilettos'},
+        {'_id': 'vc_shoes_party_3', 'name': 'Red Platform Heels', 'category': 'Shoes', 'color': 'Red', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/ff0000/ffffff?text=Platform+Heels'},
+        {'_id': 'vc_shoes_party_4', 'name': 'Black Ankle Boots', 'category': 'Shoes', 'color': 'Black', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/000000/ffffff?text=Ankle+Boots'},
+        {'_id': 'vc_shoes_party_5', 'name': 'Purple Strappy Heels', 'category': 'Shoes', 'color': 'Purple', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/800080/ffffff?text=Strappy+Heels'},
+        # Formal Shoes
         {'_id': 'vc_shoes_formal_1', 'name': 'Black Oxfords', 'category': 'Shoes', 'color': 'Black', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/000000/ffffff?text=Oxfords'},
+        {'_id': 'vc_shoes_formal_2', 'name': 'Patent Leather Shoes', 'category': 'Shoes', 'color': 'Black', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/000000/ffffff?text=Patent+Leather'},
+        {'_id': 'vc_shoes_formal_3', 'name': 'Navy Dress Shoes', 'category': 'Shoes', 'color': 'Navy', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/000080/ffffff?text=Dress+Shoes'},
+        {'_id': 'vc_shoes_formal_4', 'name': 'Burgundy Loafers', 'category': 'Shoes', 'color': 'Burgundy', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/800020/ffffff?text=Burgundy+Loafers'},
+        {'_id': 'vc_shoes_formal_5', 'name': 'Black Evening Heels', 'category': 'Shoes', 'color': 'Black', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/000000/ffffff?text=Evening+Heels'},
     ]
 }
 
