@@ -1,6 +1,5 @@
 import os
 import numpy as np
-# amazonq-ignore-next-line
 import tensorflow as tf
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from PIL import Image
@@ -16,15 +15,39 @@ try:
 except Exception as e:
     model = None
     class_names = []
-    # amazonq-ignore-next-line
     print(f"Warning: Model loading failed - {e}. Using defaults for categorization.")
 
-# Remove hardcoded catalog - use trained model predictions only
+# Expanded virtual catalog (unchanged from before)
+VIRTUAL_CATALOG = {
+    'Tops': [
+        {'_id': 'vc_top_casual_1', 'name': 'White Cotton T-Shirt', 'category': 'Tops', 'color': 'White', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/ffffff/000000?text=White+T-Shirt'},
+        {'_id': 'vc_top_work_1', 'name': 'Blue Button-Down Shirt', 'category': 'Tops', 'color': 'Blue', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/0000ff/ffffff?text=Button-Down'},
+        {'_id': 'vc_top_party_1', 'name': 'Sequined Blouse', 'category': 'Tops', 'color': 'Silver', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/c0c0c0/000000?text=Sequined+Blouse'},
+        {'_id': 'vc_top_formal_1', 'name': 'Black Blazer', 'category': 'Tops', 'color': 'Black', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/000000/ffffff?text=Black+Blazer'},
+    ],
+    'Bottoms': [
+        {'_id': 'vc_bottom_casual_1', 'name': 'Blue Jeans', 'category': 'Bottoms', 'color': 'Blue', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/0000ff/ffffff?text=Blue+Jeans'},
+        {'_id': 'vc_bottom_work_1', 'name': 'Gray Slacks', 'category': 'Bottoms', 'color': 'Gray', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/808080/ffffff?text=Gray+Slacks'},
+        {'_id': 'vc_bottom_party_1', 'name': 'Red Mini Skirt', 'category': 'Bottoms', 'color': 'Red', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/ff0000/ffffff?text=Red+Skirt'},
+        {'_id': 'vc_bottom_formal_1', 'name': 'Black Tailored Pants', 'category': 'Bottoms', 'color': 'Black', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/000000/ffffff?text=Tailored+Pants'},
+    ],
+    'Shoes': [
+        {'_id': 'vc_shoes_casual_1', 'name': 'White Sneakers', 'category': 'Shoes', 'color': 'White', 'style': 'Casual', 'imageUrl': 'https://placehold.co/400x400/ffffff/000000?text=White+Sneakers'},
+        {'_id': 'vc_shoes_work_1', 'name': 'Brown Loafers', 'category': 'Shoes', 'color': 'Brown', 'style': 'Work', 'imageUrl': 'https://placehold.co/400x400/8b4513/ffffff?text=Loafers'},
+        {'_id': 'vc_shoes_party_1', 'name': 'Gold Heels', 'category': 'Shoes', 'color': 'Gold', 'style': 'Party', 'imageUrl': 'https://placehold.co/400x400/ffd700/000000?text=Gold+Heels'},
+        {'_id': 'vc_shoes_formal_1', 'name': 'Black Oxfords', 'category': 'Shoes', 'color': 'Black', 'style': 'Formal', 'imageUrl': 'https://placehold.co/400x400/000000/ffffff?text=Oxfords'},
+    ]
+}
 
 # Scoring functions (with safeguards for empty lists)
 def occasion_filter(items, style_preference):
-    # Return all items if no specific style filtering needed
-    return items
+    allowed_styles = {
+        'casual': ['Casual', 'Neutral', 'Work'],
+        'work': ['Work', 'Formal', 'Neutral', 'Casual'],
+        'party': ['Party', 'Casual', 'Neutral'],
+        'formal': ['Formal', 'Work', 'Neutral']
+    }.get(style_preference.lower(), ['Neutral'])
+    return [item for item in items if item.get('style', '').lower() in [s.lower() for s in allowed_styles]]
 
 def style_score(items, style_preference):
     if not items:
@@ -37,585 +60,106 @@ def style_score(items, style_preference):
             score += 3
     return score / len(items)
 
-def color_score(items, body_color, style_preference):
+def color_score(items, body_color):
     if not items:
         return 0
     score = 0
-    
-    # Enhanced color matching based on skin tone and occasion
-    skin_tone_colors = {
-        'warm': {
-            'casual': ['coral', 'peach', 'warm_yellow', 'orange', 'brown'],
-            'work': ['navy', 'burgundy', 'forest_green', 'cream'],
-            'party': ['gold', 'red', 'emerald', 'bronze'],
-            'formal': ['charcoal', 'deep_blue', 'burgundy', 'cream']
-        },
-        'cool': {
-            'casual': ['mint', 'lavender', 'cool_blue', 'gray', 'white'],
-            'work': ['navy', 'gray', 'black', 'white', 'cool_blue'],
-            'party': ['silver', 'royal_blue', 'purple', 'emerald'],
-            'formal': ['black', 'navy', 'gray', 'white', 'silver']
-        },
-        'neutral': {
-            'casual': ['beige', 'olive', 'denim', 'white', 'gray'],
-            'work': ['navy', 'black', 'gray', 'white', 'beige'],
-            'party': ['black', 'gold', 'silver', 'red'],
-            'formal': ['black', 'navy', 'gray', 'white']
-        }
-    }
-    
-    preferred_colors = skin_tone_colors.get(body_color.lower(), {}).get(style_preference.lower(), [])
-    
+    warm_colors = ['red', 'orange', 'yellow', 'gold']
+    cool_colors = ['blue', 'green', 'purple', 'silver']
+    party_colors = ['red', 'gold', 'silver']
+    formal_colors = ['black', 'gray', 'navy']
     for item in items:
         item_color = item.get('color', '').lower()
-        if item_color in preferred_colors:
-            score += 8
-        elif item_color in ['black', 'white', 'gray', 'navy']:  # Universal colors
+        if body_color.lower() == 'warm' and item_color in warm_colors:
+            score += 5
+        elif body_color.lower() == 'cool' and item_color in cool_colors:
+            score += 5
+        elif item_color in party_colors and 'party' in item.get('style', '').lower():
             score += 4
-        else:
-            score += 1
-    
+        elif item_color in formal_colors and 'formal' in item.get('style', '').lower():
+            score += 4
+        elif item_color in ['black', 'white', 'gray']:
+            score += 2
     return score / len(items)
 
 def body_type_score(items, height, weight):
     if not items or not height or not weight:
         return 0
-    
-    # Convert height to meters if needed
-    height_m = height / 100 if height > 3 else height
-    bmi = weight / (height_m ** 2)
-    
+    bmi_proxy = weight / (height ** 2)
     score = 0
     for item in items:
-        item_name = item.get('name', '').lower()
-        item_style = item.get('style', '').lower()
-        
-        # Height-based scoring
-        if height_m < 1.65:  # Shorter height
-            if any(word in item_name for word in ['high-waisted', 'cropped', 'fitted']):
-                score += 5
-            elif any(word in item_name for word in ['long', 'oversized']):
-                score -= 2
-        elif height_m > 1.75:  # Taller height
-            if any(word in item_name for word in ['long', 'maxi', 'wide-leg']):
-                score += 5
-        
-        # BMI-based scoring
-        if bmi > 25:  # Higher BMI
-            if any(word in item_name for word in ['loose', 'flowy', 'a-line']):
-                score += 4
-            elif any(word in item_name for word in ['tight', 'bodycon']):
-                score -= 3
-        elif bmi < 18.5:  # Lower BMI
-            if any(word in item_name for word in ['fitted', 'structured', 'tailored']):
-                score += 4
-        
-        # Universal flattering items
-        if any(word in item_name for word in ['wrap', 'v-neck', 'straight-leg']):
-            score += 2
-    
+        if height < 165 and 'elongating' in item.get('name', '').lower():
+            score += 4
+        elif bmi_proxy > 25 and 'loose' in item.get('name', '').lower():
+            score += 3
+        elif bmi_proxy < 18.5 and 'fitted' in item.get('name', '').lower():
+            score += 3
     return score / len(items)
 
 def generate_outfit(payload):
-    """AI-powered outfit generation using StyleZAP deep learning model"""
-    from app.ai_model import ai_model
-    
-    # Process through AI model
-    result = ai_model.predict_outfit_compatibility(payload)
-    return result
+    wardrobe = payload.get('wardrobe', [])
+    style_preference = payload.get('style', 'Casual').lower()
+    height = payload.get('height')
+    weight = payload.get('weight')
+    body_color = payload.get('body_color', 'Neutral').lower()
 
-def get_manual_outfits(style, height, weight, skin_tone, gender):
-    """Generate manual outfit suggestions based on parameters"""
-    
-    # Weight categories
-    if weight < 50:
-        weight_cat = "underweight"
-    elif weight <= 60:
-        weight_cat = "light"
-    elif weight <= 70:
-        weight_cat = "medium"
-    elif weight <= 80:
-        weight_cat = "heavy"
-    else:
-        weight_cat = "plus"
-    
-    # Height categories
-    if height < 150:
-        height_cat = "petite"
-    elif height <= 160:
-        height_cat = "short"
-    elif height <= 170:
-        height_cat = "average"
-    elif height <= 180:
-        height_cat = "tall"
-    else:
-        height_cat = "very_tall"
-    
-    # Combined body type for outfit selection
-    body_type = f"{weight_cat}_{height_cat}"
-    
-    # Color palettes by skin tone
-    colors = {
-        'warm': {
-            'casual': ['coral', 'peach', 'olive', 'brown', 'cream'],
-            'work': ['navy', 'burgundy', 'forest green', 'camel'],
-            'party': ['gold', 'red', 'emerald', 'bronze'],
-            'formal': ['charcoal', 'deep blue', 'burgundy']
-        },
-        'cool': {
-            'casual': ['mint', 'lavender', 'gray', 'white', 'denim'],
-            'work': ['navy', 'black', 'cool gray', 'white'],
-            'party': ['silver', 'royal blue', 'purple', 'emerald'],
-            'formal': ['black', 'navy', 'platinum', 'white']
-        },
-        'neutral': {
-            'casual': ['beige', 'khaki', 'white', 'gray', 'denim'],
-            'work': ['navy', 'black', 'gray', 'white'],
-            'party': ['black', 'gold', 'red', 'navy'],
-            'formal': ['black', 'navy', 'charcoal', 'white']
-        }
-    }
-    
-    style_colors = colors.get(skin_tone, colors['neutral']).get(style, ['black', 'white'])
-    
-    # Generate outfits based on gender and body type
-    outfits = []
-    
-    print(f"DEBUG: Processing gender '{gender}' for style '{style}'")
-    
-    if gender in ['female', 'woman', 'girl', 'f']:
-        print("DEBUG: Using female outfits")
-        outfits = generate_female_outfits(style, body_type, height_cat, style_colors)
-    elif gender in ['male', 'man', 'boy', 'm']:
-        print("DEBUG: Using male outfits")
-        outfits = generate_male_outfits(style, body_type, height_cat, style_colors)
-    else:
-        print(f"DEBUG: Unknown gender '{gender}', defaulting to female")
-        outfits = generate_female_outfits(style, body_type, height_cat, style_colors)
-    
-    return outfits
-
-def generate_female_outfits(style, body_type, height_cat, colors):
-    weight_cat, height_cat = body_type.split('_')
-    print(f"DEBUG: Generating female outfits for style: {style}, weight: {weight_cat}, height: {height_cat}")
-    print(f"DEBUG: Available colors: {colors}")
-    
-    if style == 'casual':
-        # Weight-based tops
-        if weight_cat in ['underweight', 'light']:
-            top_name = 'Fitted Crop Top'
-        elif weight_cat in ['medium']:
-            top_name = 'Regular T-Shirt'
-        else:  # heavy, plus
-            top_name = 'Flowy Tunic Top'
-        
-        # Height-based bottoms
-        if height_cat in ['petite', 'short']:
-            bottom_name = 'High-Waisted Skinny Jeans'
-        elif height_cat == 'average':
-            bottom_name = 'Straight Leg Jeans'
-        else:  # tall, very_tall
-            bottom_name = 'Bootcut Long Jeans'
-        
-        # Height-based shoes
-        if height_cat in ['petite', 'short']:
-            shoe_name = 'Platform Sneakers'
-        else:
-            shoe_name = 'Regular Sneakers'
-        
-        return [
-            {
-                '_id': f'f_casual_{weight_cat}_{height_cat}_1',
-                'name': f'{colors[0].title()} {top_name}',
-                'category': 'Tops',
-                'color': colors[0],
-                'style': 'Casual',
-                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text={top_name.replace(" ", "+")}'
-            },
-            {
-                '_id': f'f_casual_{weight_cat}_{height_cat}_2',
-                'name': bottom_name,
-                'category': 'Bottoms',
-                'color': 'blue',
-                'style': 'Casual',
-                'imageUrl': f'https://placehold.co/300x400/4169E1/white?text={bottom_name.replace(" ", "+")}'
-            },
-            {
-                '_id': f'f_casual_{weight_cat}_{height_cat}_3',
-                'name': shoe_name,
-                'category': 'Shoes',
-                'color': 'white',
-                'style': 'Casual',
-                'imageUrl': f'https://placehold.co/300x400/white/black?text={shoe_name.replace(" ", "+")}'
-            }
-        ]
-    elif style == 'work':
-        # Weight and height based work outfits
-        if weight_cat in ['underweight', 'light']:
-            top_name = 'Fitted Blazer'
-        else:
-            top_name = 'Classic Blazer'
-        
-        if height_cat in ['petite', 'short']:
-            bottom_name = 'High-Waisted Pencil Skirt'
-            shoe_name = 'Block Heels'
-        else:
-            bottom_name = 'A-Line Skirt'
-            shoe_name = 'Low Pumps'
-        
-        return [
-            {
-                '_id': f'f_work_{weight_cat}_{height_cat}_1',
-                'name': f'{colors[0].title()} {top_name}',
-                'category': 'Tops',
-                'color': colors[0],
-                'style': 'Work',
-                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text={top_name.replace(" ", "+")}'
-            },
-            {
-                '_id': f'f_work_{weight_cat}_{height_cat}_2',
-                'name': f'{colors[1] if len(colors) > 1 else "Gray"} {bottom_name}',
-                'category': 'Bottoms',
-                'color': colors[1] if len(colors) > 1 else 'gray',
-                'style': 'Work',
-                'imageUrl': f'https://placehold.co/300x400/808080/white?text={bottom_name.replace(" ", "+")}'
-            },
-            {
-                '_id': f'f_work_{weight_cat}_{height_cat}_3',
-                'name': f'Black {shoe_name}',
-                'category': 'Shoes',
-                'color': 'black',
-                'style': 'Work',
-                'imageUrl': f'https://placehold.co/300x400/000000/white?text={shoe_name.replace(" ", "+")}'
-            }
-        ]
-    elif style == 'party':
-        # Weight and height based party outfits
-        if weight_cat in ['underweight', 'light']:
-            top_name = 'Crop Sequin Top'
-        else:
-            top_name = 'Wrap Sequin Dress'
-        
-        if height_cat in ['petite', 'short']:
-            bottom_name = 'Mini Skirt'
-            shoe_name = 'Platform Heels'
-        else:
-            bottom_name = 'Midi Skirt'
-            shoe_name = 'Stiletto Heels'
-        
-        return [
-            {
-                '_id': f'f_party_{weight_cat}_{height_cat}_1',
-                'name': f'{colors[0].title()} {top_name}',
-                'category': 'Tops',
-                'color': colors[0],
-                'style': 'Party',
-                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text={top_name.replace(" ", "+")}'
-            },
-            {
-                '_id': f'f_party_{weight_cat}_{height_cat}_2',
-                'name': f'{colors[1] if len(colors) > 1 else "Black"} {bottom_name}',
-                'category': 'Bottoms',
-                'color': colors[1] if len(colors) > 1 else 'black',
-                'style': 'Party',
-                'imageUrl': f'https://placehold.co/300x400/000000/white?text={bottom_name.replace(" ", "+")}'
-            },
-            {
-                '_id': f'f_party_{weight_cat}_{height_cat}_3',
-                'name': f'{colors[0]} {shoe_name}',
-                'category': 'Shoes',
-                'color': colors[0],
-                'style': 'Party',
-                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text={shoe_name.replace(" ", "+")}'
-            }
-        ]
-    else:  # formal
-        # Weight and height based formal outfits
-        if weight_cat in ['underweight', 'light']:
-            top_name = 'Bodycon Evening Gown'
-        else:
-            top_name = 'A-Line Evening Gown'
-        
-        if height_cat in ['petite', 'short']:
-            bottom_name = 'Cropped Dress Pants'
-            shoe_name = 'High Heels'
-        else:
-            bottom_name = 'Long Dress Pants'
-            shoe_name = 'Mid Heels'
-        
-        return [
-            {
-                '_id': f'f_formal_{weight_cat}_{height_cat}_1',
-                'name': f'{colors[0].title()} {top_name}',
-                'category': 'Tops',
-                'color': colors[0],
-                'style': 'Formal',
-                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text={top_name.replace(" ", "+")}'
-            },
-            {
-                '_id': f'f_formal_{weight_cat}_{height_cat}_2',
-                'name': f'{colors[1] if len(colors) > 1 else "Charcoal"} {bottom_name}',
-                'category': 'Bottoms',
-                'color': colors[1] if len(colors) > 1 else 'charcoal',
-                'style': 'Formal',
-                'imageUrl': f'https://placehold.co/300x400/36454F/white?text={bottom_name.replace(" ", "+")}'
-            },
-            {
-                '_id': f'f_formal_{weight_cat}_{height_cat}_3',
-                'name': f'Patent {shoe_name}',
-                'category': 'Shoes',
-                'color': 'black',
-                'style': 'Formal',
-                'imageUrl': f'https://placehold.co/300x400/000000/white?text=Patent+{shoe_name.replace(" ", "+")}'
-            }
-        ]
-
-def generate_male_outfits(style, body_type, height_cat, colors):
-    weight_cat, height_cat = body_type.split('_')
-    print(f"DEBUG: Generating male outfits for style: {style}, weight: {weight_cat}, height: {height_cat}")
-    print(f"DEBUG: Available colors: {colors}")
-    
-    if style == 'casual':
-        # Weight-based tops
-        if weight_cat in ['underweight', 'light']:
-            top_name = 'Slim Fit T-Shirt'
-        elif weight_cat in ['medium']:
-            top_name = 'Regular Polo Shirt'
-        else:  # heavy, plus
-            top_name = 'Loose Fit Henley'
-        
-        # Height-based bottoms
-        if height_cat in ['petite', 'short']:
-            bottom_name = 'Regular Shorts'
-        elif height_cat == 'average':
-            bottom_name = 'Chino Pants'
-        else:  # tall, very_tall
-            bottom_name = 'Long Cargo Pants'
-        
-        return [
-            {
-                '_id': f'm_casual_{weight_cat}_{height_cat}_1',
-                'name': f'{colors[0].title()} {top_name}',
-                'category': 'Tops',
-                'color': colors[0],
-                'style': 'Casual',
-                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text={top_name.replace(" ", "+")}'
-            },
-            {
-                '_id': f'm_casual_{weight_cat}_{height_cat}_2',
-                'name': bottom_name,
-                'category': 'Bottoms',
-                'color': 'khaki',
-                'style': 'Casual',
-                'imageUrl': f'https://placehold.co/300x400/F0E68C/black?text={bottom_name.replace(" ", "+")}'
-            },
-            {
-                '_id': f'm_casual_{weight_cat}_{height_cat}_3',
-                'name': 'Casual Sneakers',
-                'category': 'Shoes',
-                'color': 'white',
-                'style': 'Casual',
-                'imageUrl': 'https://placehold.co/300x400/white/black?text=Casual+Sneakers'
-            }
-        ]
-    elif style == 'work':
-        return [
-            {
-                '_id': f'm_work_{weight_cat}_{height_cat}_1',
-                'name': f'{colors[0].title()} Business Suit',
-                'category': 'Tops',
-                'color': colors[0],
-                'style': 'Work',
-                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text=Business+Suit'
-            },
-            {
-                '_id': f'm_work_{weight_cat}_{height_cat}_2',
-                'name': 'Formal Trousers',
-                'category': 'Bottoms',
-                'color': 'gray',
-                'style': 'Work',
-                'imageUrl': 'https://placehold.co/300x400/808080/white?text=Formal+Trousers'
-            },
-            {
-                '_id': f'm_work_{weight_cat}_{height_cat}_3',
-                'name': 'Leather Dress Shoes',
-                'category': 'Shoes',
-                'color': 'brown',
-                'style': 'Work',
-                'imageUrl': 'https://placehold.co/300x400/8B4513/white?text=Leather+Dress+Shoes'
-            }
-        ]
-    elif style == 'party':
-        return [
-            {
-                '_id': f'm_party_{weight_cat}_{height_cat}_1',
-                'name': f'{colors[0].title()} Party Blazer',
-                'category': 'Tops',
-                'color': colors[0],
-                'style': 'Party',
-                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text=Party+Blazer'
-            },
-            {
-                '_id': f'm_party_{weight_cat}_{height_cat}_2',
-                'name': 'Designer Jeans',
-                'category': 'Bottoms',
-                'color': 'black',
-                'style': 'Party',
-                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Designer+Jeans'
-            },
-            {
-                '_id': f'm_party_{weight_cat}_{height_cat}_3',
-                'name': 'Stylish Boots',
-                'category': 'Shoes',
-                'color': 'black',
-                'style': 'Party',
-                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Stylish+Boots'
-            }
-        ]
-    else:  # formal
-        return [
-            {
-                '_id': f'm_formal_{weight_cat}_{height_cat}_1',
-                'name': f'{colors[0].title()} Evening Suit',
-                'category': 'Tops',
-                'color': colors[0],
-                'style': 'Formal',
-                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text=Evening+Suit'
-            },
-            {
-                '_id': f'm_formal_{weight_cat}_{height_cat}_2',
-                'name': 'Formal Dress Pants',
-                'category': 'Bottoms',
-                'color': 'charcoal',
-                'style': 'Formal',
-                'imageUrl': 'https://placehold.co/300x400/36454F/white?text=Formal+Dress+Pants'
-            },
-            {
-                '_id': f'm_formal_{weight_cat}_{height_cat}_3',
-                'name': 'Patent Leather Shoes',
-                'category': 'Shoes',
-                'color': 'black',
-                'style': 'Formal',
-                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Patent+Leather+Shoes'
-            }
-        ]
-
-def generate_unisex_outfits(style, body_type, height_cat, colors):
-    if style == 'casual':
-        return generate_female_outfits(style, body_type, height_cat, colors)
-    elif style == 'work':
-        return generate_male_outfits(style, body_type, height_cat, colors)
-    elif style == 'party':
-        return generate_female_outfits(style, body_type, height_cat, colors)
-    else:  # formal
-        return generate_male_outfits(style, body_type, height_cat, colors)
-
-    # Re-categorize ALL wardrobe items using trained model
+    # Re-categorize wardrobe using trained model if categories are missing/inaccurate
     for item in wardrobe:
-        if model is not None and 'imageUrl' in item:
-            try:
-                response = requests.get(item['imageUrl'], timeout=5)
-                response.raise_for_status()
-                img = Image.open(io.BytesIO(response.content)).convert('RGB').resize((224, 224))
-                arr = preprocess_input(np.expand_dims(np.array(img), 0))
-                preds = model.predict(arr)
-                predicted_category = class_names[np.argmax(preds[0])]
-                item['category'] = predicted_category
-                item['confidence'] = float(np.max(preds[0]))
-                print(f"DEBUG: Predicted {item.get('name', 'Item')} as {predicted_category}")
-            except Exception as e:
-                print(f"DEBUG: Failed to predict category for {item.get('name', 'Item')}: {e}")
-                item['category'] = 'Tops'  # Default fallback
-                item['confidence'] = 0.0
-        else:
-            # Ensure every item has a category
-            if 'category' not in item or not item['category']:
-                item['category'] = 'Tops'  # Default fallback
+        if 'category' not in item or not item['category']:
+            if model is not None and 'imageUrl' in item:
+                try:
+                    response = requests.get(item['imageUrl'], timeout=5)
+                    response.raise_for_status()
+                    img = Image.open(io.BytesIO(response.content)).convert('RGB').resize((224, 224))
+                    arr = preprocess_input(np.expand_dims(np.array(img), 0))
+                    preds = model.predict(arr)
+                    item['category'] = class_names[np.argmax(preds[0])]
+                except Exception as e:
+                    item['category'] = 'Unknown'  # Fallback to avoid crash
+            else:
+                item['category'] = 'Tops'  # Default
 
-    # Filter wardrobe by occasion and gender
-    def gender_filter(items, gender):
-        if gender == 'unisex':
-            return items
-        return [item for item in items if item.get('gender', 'unisex').lower() in [gender, 'unisex']]
-    
-    # Apply both occasion and gender filters with fallbacks
-    all_tops = [item for item in wardrobe if item.get('category') == 'Tops']
-    all_bottoms = [item for item in wardrobe if item.get('category') == 'Bottoms']
-    all_shoes = [item for item in wardrobe if item.get('category') == 'Shoes']
-    
-    print(f"DEBUG: Found {len(all_tops)} tops, {len(all_bottoms)} bottoms, {len(all_shoes)} shoes")
-    
-    tops = gender_filter(occasion_filter(all_tops, style_preference), gender)
-    bottoms = gender_filter(occasion_filter(all_bottoms, style_preference), gender)
-    shoes = gender_filter(occasion_filter(all_shoes, style_preference), gender)
-    
-    # Fallback to all items if filters are too restrictive
-    if not tops:
-        tops = all_tops
-    if not bottoms:
-        bottoms = all_bottoms
-    if not shoes:
-        shoes = all_shoes
+    # Filter wardrobe by occasion
+    tops = occasion_filter([item for item in wardrobe if item['category'] == 'Tops'], style_preference)
+    bottoms = occasion_filter([item for item in wardrobe if item['category'] == 'Bottoms'], style_preference)
+    shoes = occasion_filter([item for item in wardrobe if item['category'] == 'Shoes'], style_preference)
 
     candidates = []
-    
-    # Use only user's wardrobe items predicted by trained model
-    sources_tops = tops if tops else []
-    sources_bottoms = bottoms if bottoms else []
-    sources_shoes = shoes if shoes else []
+    catalog_tops = [t for t in VIRTUAL_CATALOG['Tops'] if t['style'].lower() == style_preference]
+    catalog_bottoms = [b for b in VIRTUAL_CATALOG['Bottoms'] if b['style'].lower() == style_preference]
+    catalog_shoes = [s for s in VIRTUAL_CATALOG['Shoes'] if s['style'].lower() == style_preference]
+
+    # Generate combinations (relaxed to allow more mixed results)
+    sources_tops = tops if tops else catalog_tops
+    sources_bottoms = bottoms if bottoms else catalog_bottoms
+    sources_shoes = shoes if shoes else catalog_shoes
 
     for top in sources_tops:
         for bottom in sources_bottoms:
             for shoe in sources_shoes:
                 current = [top, bottom, shoe]
-                # Remove this filter to allow all combinations
-                score = (style_score(current, style_preference) + 
-                        color_score(current, body_color, style_preference) + 
-                        body_type_score(current, height, weight))
+                num_suggested = sum(1 for i in current if '_id' in i and 'vc_' in i['_id'])
+                if num_suggested >= len(current):  # Avoid all-suggested, but allow partial
+                    continue
+                score = style_score(current, style_preference) + color_score(current, body_color) + body_type_score(current, height, weight)
                 candidates.append((current, score))
 
-    print(f"DEBUG: Generated {len(candidates)} outfit candidates")
-    
     if not candidates:
-        if all_tops and all_bottoms and all_shoes:
-            # Pick first available items as fallback
-            fallback_outfit = [all_tops[0], all_bottoms[0], all_shoes[0]]
-            print(f"DEBUG: Using fallback outfit")
-            return {
-                "userItems": fallback_outfit,
-                "suggestedItems": [],
-                "score": 1,
-                "message": "Basic outfit suggestion from your wardrobe"
-            }
-        else:
-            # Use Gemini as fallback when no items available
-            print(f"DEBUG: No items found, using Gemini fallback")
-            from app.gemini_service import get_outfit_recommendations
-            gemini_result = get_outfit_recommendations(
-                wardrobe, style_preference, body_color, gender, style_preference
-            )
-            return {
-                "userItems": [],
-                "suggestedItems": [],
-                "score": 0,
-                "gemini_fallback": gemini_result,
-                "message": f"No items found. Gemini suggestions provided. Missing: Tops({len(all_tops)}), Bottoms({len(all_bottoms)}), Shoes({len(all_shoes)})"
-            }
+        # Fallback to a basic suggestion if nothing matches
+        fallback_top = catalog_tops[0] if catalog_tops else {'_id': 'fallback', 'name': 'Basic Top', 'category': 'Tops', 'color': 'White', 'style': style_preference, 'imageUrl': 'https://placehold.co/400x400'}
+        fallback_bottom = catalog_bottoms[0] if catalog_bottoms else {'_id': 'fallback', 'name': 'Basic Bottom', 'category': 'Bottoms', 'color': 'Black', 'style': style_preference, 'imageUrl': 'https://placehold.co/400x400'}
+        fallback_shoe = catalog_shoes[0] if catalog_shoes else {'_id': 'fallback', 'name': 'Basic Shoes', 'category': 'Shoes', 'color': 'Black', 'style': style_preference, 'imageUrl': 'https://placehold.co/400x400'}
+        best_outfit = [fallback_top, fallback_bottom, fallback_shoe]
+        best_score = 0
+        user_items = []
+        suggested_items = best_outfit
     else:
         best_outfit, best_score = max(candidates, key=lambda x: x[1])
-        user_items = best_outfit
-        suggested_items = []
-        print(f"DEBUG: Best outfit score: {best_score}")
-        
-        # Add Gemini suggestions alongside our results
-        from app.gemini_service import get_outfit_recommendations
-        gemini_result = get_outfit_recommendations(
-            wardrobe, style_preference, body_color, gender, style_preference
-        )
+        user_items = [item for item in best_outfit if '_id' in item and 'vc_' not in item['_id']]
+        suggested_items = [item for item in best_outfit if '_id' in item and 'vc_' in item['_id']]
 
     return {
         "userItems": user_items,
         "suggestedItems": suggested_items,
-        "score": best_score,
-        "gemini_suggestions": gemini_result if 'gemini_result' in locals() else None
+        "score": best_score
     }
