@@ -3,9 +3,14 @@ import requests
 from PIL import Image
 import io
 import base64
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configure Gemini
-genai.configure(api_key="AIzaSyARd14tfjxf9YgF-3u91Lfp0gqdajHKrOI")
+genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
 model = genai.GenerativeModel('gemini-2.0-flash-exp')
 
 def analyze_face_and_tone(image_url):

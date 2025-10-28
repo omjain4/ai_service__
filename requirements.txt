@@ -8,3 +8,4 @@ tensorflow
 python-multipart
 requests
 google-generativeai
+python-dotenv
