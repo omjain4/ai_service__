@@ -49,6 +49,7 @@ async def nlp_endpoint(payload: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/wardrobe")
 @app.post("/api/personalize")
 async def personalize_endpoint(payload: dict):
     try:
