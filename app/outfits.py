@@ -21,17 +21,8 @@ except Exception as e:
 
 # Scoring functions (with safeguards for empty lists)
 def occasion_filter(items, style_preference):
-    style_mapping = {
-        'casual': ['casual', 'neutral', 'everyday', 'weekend'],
-        'work': ['work', 'business', 'professional', 'office', 'neutral'],
-        'party': ['party', 'evening', 'night', 'festive', 'cocktail'],
-        'formal': ['formal', 'business', 'elegant', 'dressy', 'professional'],
-        'date': ['date', 'romantic', 'chic', 'elegant'],
-        'sport': ['sport', 'athletic', 'gym', 'active', 'casual']
-    }
-    
-    allowed_styles = style_mapping.get(style_preference.lower(), ['neutral', 'casual'])
-    return [item for item in items if any(style in item.get('style', '').lower() for style in allowed_styles)]
+    # Return all items if no specific style filtering needed
+    return items
 
 def style_score(items, style_preference):
     if not items:
@@ -154,14 +145,22 @@ def generate_outfit(payload):
             return items
         return [item for item in items if item.get('gender', 'unisex').lower() in [gender, 'unisex']]
     
-    # Apply both occasion and gender filters
-    all_tops = [item for item in wardrobe if item['category'] == 'Tops']
-    all_bottoms = [item for item in wardrobe if item['category'] == 'Bottoms']
-    all_shoes = [item for item in wardrobe if item['category'] == 'Shoes']
+    # Apply both occasion and gender filters with fallbacks
+    all_tops = [item for item in wardrobe if item.get('category') == 'Tops']
+    all_bottoms = [item for item in wardrobe if item.get('category') == 'Bottoms']
+    all_shoes = [item for item in wardrobe if item.get('category') == 'Shoes']
     
     tops = gender_filter(occasion_filter(all_tops, style_preference), gender)
     bottoms = gender_filter(occasion_filter(all_bottoms, style_preference), gender)
     shoes = gender_filter(occasion_filter(all_shoes, style_preference), gender)
+    
+    # Fallback to all items if filters are too restrictive
+    if not tops:
+        tops = all_tops
+    if not bottoms:
+        bottoms = all_bottoms
+    if not shoes:
+        shoes = all_shoes
 
     candidates = []
     
@@ -174,28 +173,54 @@ def generate_outfit(payload):
         for bottom in sources_bottoms:
             for shoe in sources_shoes:
                 current = [top, bottom, shoe]
-                num_suggested = sum(1 for i in current if '_id' in i and 'vc_' in i['_id'])
-                if num_suggested >= len(current):  # Avoid all-suggested, but allow partial
-                    continue
+                # Remove this filter to allow all combinations
                 score = (style_score(current, style_preference) + 
                         color_score(current, body_color, style_preference) + 
                         body_type_score(current, height, weight))
                 candidates.append((current, score))
 
     if not candidates:
-        return {
-            "userItems": [],
-            "suggestedItems": [],
-            "score": 0,
-            "message": "No suitable outfit combinations found in your wardrobe for this style preference."
-        }
+        # Fallback: try without strict filtering
+        all_tops = [item for item in wardrobe if item.get('category') == 'Tops']
+        all_bottoms = [item for item in wardrobe if item.get('category') == 'Bottoms'] 
+        all_shoes = [item for item in wardrobe if item.get('category') == 'Shoes']
+        
+        if all_tops and all_bottoms and all_shoes:
+            # Pick first available items as fallback
+            fallback_outfit = [all_tops[0], all_bottoms[0], all_shoes[0]]
+            return {
+                "userItems": fallback_outfit,
+                "suggestedItems": [],
+                "score": 1,
+                "message": "Basic outfit suggestion from your wardrobe"
+            }
+        else:
+            # Use Gemini as fallback when no items available
+            from app.gemini_service import get_outfit_recommendations
+            gemini_result = get_outfit_recommendations(
+                wardrobe, style_preference, body_color, gender, style_preference
+            )
+            return {
+                "userItems": [],
+                "suggestedItems": [],
+                "score": 0,
+                "gemini_fallback": gemini_result,
+                "message": f"No items found. Gemini suggestions provided. Missing: Tops({len(all_tops)}), Bottoms({len(all_bottoms)}), Shoes({len(all_shoes)})"
+            }
     else:
         best_outfit, best_score = max(candidates, key=lambda x: x[1])
-        user_items = best_outfit  # All items are from user's wardrobe
-        suggested_items = []  # No hardcoded suggestions
+        user_items = best_outfit
+        suggested_items = []
+        
+        # Add Gemini suggestions alongside our results
+        from app.gemini_service import get_outfit_recommendations
+        gemini_result = get_outfit_recommendations(
+            wardrobe, style_preference, body_color, gender, style_preference
+        )
 
     return {
         "userItems": user_items,
         "suggestedItems": suggested_items,
-        "score": best_score
+        "score": best_score,
+        "gemini_suggestions": gemini_result if 'gemini_result' in locals() else None
     }
