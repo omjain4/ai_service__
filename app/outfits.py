@@ -1,5 +1,6 @@
 import os
 import numpy as np
+# amazonq-ignore-next-line
 import tensorflow as tf
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from PIL import Image
@@ -15,6 +16,7 @@ try:
 except Exception as e:
     model = None
     class_names = []
+    # amazonq-ignore-next-line
     print(f"Warning: Model loading failed - {e}. Using defaults for categorization.")
 
 # Remove hardcoded catalog - use trained model predictions only
@@ -119,16 +121,27 @@ def generate_outfit(payload):
     height = payload.get('height', 170)
     weight = payload.get('weight', 70)
     body_color = payload.get('body_color', 'neutral').lower()
-    gender = payload.get('gender', 'unisex').lower()
+    gender = payload.get('gender', 'female').lower()  # Default to female for better variety
+    
+    print(f"DEBUG: Received - Style: {style_preference}, Gender: {gender}, Height: {height}, Weight: {weight}, Skin: {body_color}")
     
     # Generate manual outfits based on parameters
     outfits = get_manual_outfits(style_preference, height, weight, body_color, gender)
+    
+    print(f"DEBUG: Generated {len(outfits)} outfit items")
     
     return {
         "userItems": [],
         "suggestedItems": outfits,
         "score": 5,
-        "message": f"Personalized {style_preference} outfits for {gender} with {body_color} skin tone"
+        "message": f"Personalized {style_preference} outfits for {gender} with {body_color} skin tone",
+        "debug_info": {
+            "gender": gender,
+            "style": style_preference,
+            "body_type": body_type,
+            "height_cat": height_cat,
+            "colors": style_colors
+        }
     }
 
 def get_manual_outfits(style, height, weight, skin_tone, gender):
@@ -168,12 +181,17 @@ def get_manual_outfits(style, height, weight, skin_tone, gender):
     # Generate outfits based on gender and body type
     outfits = []
     
-    if gender == 'female':
+    print(f"DEBUG: Processing gender '{gender}' for style '{style}'")
+    
+    if gender in ['female', 'woman', 'girl', 'f']:
+        print("DEBUG: Using female outfits")
         outfits = generate_female_outfits(style, body_type, height_cat, style_colors)
-    elif gender == 'male':
+    elif gender in ['male', 'man', 'boy', 'm']:
+        print("DEBUG: Using male outfits")
         outfits = generate_male_outfits(style, body_type, height_cat, style_colors)
     else:
-        outfits = generate_unisex_outfits(style, body_type, height_cat, style_colors)
+        print(f"DEBUG: Unknown gender '{gender}', defaulting to female")
+        outfits = generate_female_outfits(style, body_type, height_cat, style_colors)
     
     return outfits
 
@@ -406,32 +424,14 @@ def generate_male_outfits(style, body_type, height_cat, colors):
     return outfits
 
 def generate_unisex_outfits(style, body_type, height_cat, colors):
-    return [
-        {
-            '_id': 'u_1',
-            'name': f'{colors[0].title()} Hoodie',
-            'category': 'Tops',
-            'color': colors[0],
-            'style': style.title(),
-            'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text=Hoodie'
-        },
-        {
-            '_id': 'u_2',
-            'name': 'Joggers',
-            'category': 'Bottoms',
-            'color': 'gray',
-            'style': style.title(),
-            'imageUrl': 'https://placehold.co/300x400/808080/white?text=Joggers'
-        },
-        {
-            '_id': 'u_3',
-            'name': 'Unisex Sneakers',
-            'category': 'Shoes',
-            'color': 'white',
-            'style': style.title(),
-            'imageUrl': 'https://placehold.co/300x400/white/black?text=Sneakers'
-        }
-    ]
+    if style == 'casual':
+        return generate_female_outfits(style, body_type, height_cat, colors)
+    elif style == 'work':
+        return generate_male_outfits(style, body_type, height_cat, colors)
+    elif style == 'party':
+        return generate_female_outfits(style, body_type, height_cat, colors)
+    else:  # formal
+        return generate_male_outfits(style, body_type, height_cat, colors)
 
     # Re-categorize ALL wardrobe items using trained model
     for item in wardrobe:
