@@ -127,12 +127,32 @@ def generate_outfit(payload):
 def get_manual_outfits(style, height, weight, skin_tone, gender):
     """Generate manual outfit suggestions based on parameters"""
     
-    # Calculate BMI category
-    height_m = height / 100 if height > 3 else height
-    bmi = weight / (height_m ** 2) if height_m > 0 else 22
+    # Weight categories
+    if weight < 50:
+        weight_cat = "underweight"
+    elif weight <= 60:
+        weight_cat = "light"
+    elif weight <= 70:
+        weight_cat = "medium"
+    elif weight <= 80:
+        weight_cat = "heavy"
+    else:
+        weight_cat = "plus"
     
-    body_type = "slim" if bmi < 18.5 else "average" if bmi < 25 else "plus"
-    height_cat = "short" if height < 160 else "tall" if height > 175 else "average"
+    # Height categories
+    if height < 150:
+        height_cat = "petite"
+    elif height <= 160:
+        height_cat = "short"
+    elif height <= 170:
+        height_cat = "average"
+    elif height <= 180:
+        height_cat = "tall"
+    else:
+        height_cat = "very_tall"
+    
+    # Combined body type for outfit selection
+    body_type = f"{weight_cat}_{height_cat}"
     
     # Color palettes by skin tone
     colors = {
@@ -176,226 +196,266 @@ def get_manual_outfits(style, height, weight, skin_tone, gender):
     return outfits
 
 def generate_female_outfits(style, body_type, height_cat, colors):
-    print(f"DEBUG: Generating female outfits for style: {style}")
+    weight_cat, height_cat = body_type.split('_')
+    print(f"DEBUG: Generating female outfits for style: {style}, weight: {weight_cat}, height: {height_cat}")
     
     if style == 'casual':
+        # Weight-based tops
+        if weight_cat in ['underweight', 'light']:
+            top_name = 'Fitted Crop Top'
+        elif weight_cat in ['medium']:
+            top_name = 'Regular T-Shirt'
+        else:  # heavy, plus
+            top_name = 'Flowy Tunic Top'
+        
+        # Height-based bottoms
+        if height_cat in ['petite', 'short']:
+            bottom_name = 'High-Waisted Skinny Jeans'
+        elif height_cat == 'average':
+            bottom_name = 'Straight Leg Jeans'
+        else:  # tall, very_tall
+            bottom_name = 'Bootcut Long Jeans'
+        
+        # Height-based shoes
+        if height_cat in ['petite', 'short']:
+            shoe_name = 'Platform Sneakers'
+        else:
+            shoe_name = 'Regular Sneakers'
+        
         return [
             {
-                '_id': f'f_casual_{style}_1',
-                'name': f'{colors[0].title()} T-Shirt',
+                '_id': f'f_casual_{weight_cat}_{height_cat}_1',
+                'name': f'{colors[0].title()} {top_name}',
                 'category': 'Tops',
                 'color': colors[0],
                 'style': 'Casual',
-                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text=T-Shirt'
+                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text={top_name.replace(" ", "+")}'
             },
             {
-                '_id': f'f_casual_{style}_2',
-                'name': 'Denim Jeans',
+                '_id': f'f_casual_{weight_cat}_{height_cat}_2',
+                'name': bottom_name,
                 'category': 'Bottoms',
                 'color': 'blue',
                 'style': 'Casual',
-                'imageUrl': 'https://placehold.co/300x400/4169E1/white?text=Jeans'
+                'imageUrl': f'https://placehold.co/300x400/4169E1/white?text={bottom_name.replace(" ", "+")}'
             },
             {
-                '_id': f'f_casual_{style}_3',
-                'name': 'Canvas Sneakers',
+                '_id': f'f_casual_{weight_cat}_{height_cat}_3',
+                'name': shoe_name,
                 'category': 'Shoes',
                 'color': 'white',
                 'style': 'Casual',
-                'imageUrl': 'https://placehold.co/300x400/white/black?text=Sneakers'
+                'imageUrl': f'https://placehold.co/300x400/white/black?text={shoe_name.replace(" ", "+")}'
             }
         ]
     elif style == 'work':
         return [
             {
-                '_id': f'f_work_{style}_1',
-                'name': f'{colors[0].title()} Blazer',
+                '_id': 'f_work_blazer_1',
+                'name': 'Navy Business Blazer',
                 'category': 'Tops',
-                'color': colors[0],
+                'color': 'navy',
                 'style': 'Work',
-                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text=Blazer'
+                'imageUrl': 'https://placehold.co/300x400/000080/white?text=Business+Blazer'
             },
             {
-                '_id': f'f_work_{style}_2',
-                'name': 'Pencil Skirt',
+                '_id': 'f_work_skirt_2',
+                'name': 'Gray Pencil Skirt',
                 'category': 'Bottoms',
-                'color': 'black',
+                'color': 'gray',
                 'style': 'Work',
-                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Pencil+Skirt'
+                'imageUrl': 'https://placehold.co/300x400/808080/white?text=Pencil+Skirt'
             },
             {
-                '_id': f'f_work_{style}_3',
-                'name': 'Block Heels',
+                '_id': 'f_work_heels_3',
+                'name': 'Black Pumps',
                 'category': 'Shoes',
                 'color': 'black',
                 'style': 'Work',
-                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Block+Heels'
+                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Pumps'
             }
         ]
     elif style == 'party':
         return [
             {
-                '_id': f'f_party_{style}_1',
-                'name': f'{colors[0].title()} Sequin Dress',
+                '_id': 'f_party_top_1',
+                'name': 'Gold Sequin Halter Top',
                 'category': 'Tops',
-                'color': colors[0],
+                'color': 'gold',
                 'style': 'Party',
-                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text=Sequin+Dress'
+                'imageUrl': 'https://placehold.co/300x400/FFD700/black?text=Sequin+Halter'
             },
             {
-                '_id': f'f_party_{style}_2',
-                'name': 'Mini Skirt',
+                '_id': 'f_party_skirt_2',
+                'name': 'Red Leather Mini Skirt',
                 'category': 'Bottoms',
-                'color': 'black',
+                'color': 'red',
                 'style': 'Party',
-                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Mini+Skirt'
+                'imageUrl': 'https://placehold.co/300x400/FF0000/white?text=Leather+Mini'
             },
             {
-                '_id': f'f_party_{style}_3',
-                'name': 'Stiletto Heels',
+                '_id': 'f_party_heels_3',
+                'name': 'Silver Stiletto Heels',
                 'category': 'Shoes',
-                'color': colors[0],
+                'color': 'silver',
                 'style': 'Party',
-                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text=Stiletto+Heels'
+                'imageUrl': 'https://placehold.co/300x400/C0C0C0/black?text=Stiletto'
             }
         ]
     else:  # formal
         return [
             {
-                '_id': f'f_formal_{style}_1',
-                'name': 'White Dress Shirt',
+                '_id': 'f_formal_dress_1',
+                'name': 'Black Evening Gown',
                 'category': 'Tops',
-                'color': 'white',
-                'style': 'Formal',
-                'imageUrl': 'https://placehold.co/300x400/ffffff/000000?text=Dress+Shirt'
-            },
-            {
-                '_id': f'f_formal_{style}_2',
-                'name': 'Black Suit Pants',
-                'category': 'Bottoms',
                 'color': 'black',
                 'style': 'Formal',
-                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Suit+Pants'
+                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Evening+Gown'
             },
             {
-                '_id': f'f_formal_{style}_3',
-                'name': 'Oxford Pumps',
+                '_id': 'f_formal_pants_2',
+                'name': 'Charcoal Dress Pants',
+                'category': 'Bottoms',
+                'color': 'charcoal',
+                'style': 'Formal',
+                'imageUrl': 'https://placehold.co/300x400/36454F/white?text=Dress+Pants'
+            },
+            {
+                '_id': 'f_formal_shoes_3',
+                'name': 'Patent Leather Heels',
                 'category': 'Shoes',
                 'color': 'black',
                 'style': 'Formal',
-                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Oxford+Pumps'
+                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Patent+Heels'
             }
         ]
 
 def generate_male_outfits(style, body_type, height_cat, colors):
-    print(f"DEBUG: Generating male outfits for style: {style}")
+    weight_cat, height_cat = body_type.split('_')
+    print(f"DEBUG: Generating male outfits for style: {style}, weight: {weight_cat}, height: {height_cat}")
     
     if style == 'casual':
+        # Weight-based tops
+        if weight_cat in ['underweight', 'light']:
+            top_name = 'Slim Fit T-Shirt'
+        elif weight_cat in ['medium']:
+            top_name = 'Regular Polo Shirt'
+        else:  # heavy, plus
+            top_name = 'Loose Fit Henley'
+        
+        # Height-based bottoms
+        if height_cat in ['petite', 'short']:
+            bottom_name = 'Regular Shorts'
+        elif height_cat == 'average':
+            bottom_name = 'Chino Pants'
+        else:  # tall, very_tall
+            bottom_name = 'Long Cargo Pants'
+        
         return [
             {
-                '_id': f'm_casual_{style}_1',
-                'name': f'{colors[0].title()} Polo Shirt',
+                '_id': f'm_casual_{weight_cat}_{height_cat}_1',
+                'name': f'{colors[0].title()} {top_name}',
                 'category': 'Tops',
                 'color': colors[0],
                 'style': 'Casual',
-                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text=Polo+Shirt'
+                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text={top_name.replace(" ", "+")}'
             },
             {
-                '_id': f'm_casual_{style}_2',
-                'name': 'Cargo Shorts',
+                '_id': f'm_casual_{weight_cat}_{height_cat}_2',
+                'name': bottom_name,
                 'category': 'Bottoms',
                 'color': 'khaki',
                 'style': 'Casual',
-                'imageUrl': 'https://placehold.co/300x400/F0E68C/black?text=Cargo+Shorts'
+                'imageUrl': f'https://placehold.co/300x400/F0E68C/black?text={bottom_name.replace(" ", "+")}'
             },
             {
-                '_id': f'm_casual_{style}_3',
-                'name': 'Running Shoes',
+                '_id': f'm_casual_{weight_cat}_{height_cat}_3',
+                'name': 'Casual Sneakers',
                 'category': 'Shoes',
                 'color': 'white',
                 'style': 'Casual',
-                'imageUrl': 'https://placehold.co/300x400/white/black?text=Running+Shoes'
+                'imageUrl': 'https://placehold.co/300x400/white/black?text=Casual+Sneakers'
             }
         ]
     elif style == 'work':
         return [
             {
-                '_id': f'm_work_{style}_1',
-                'name': 'Business Shirt',
+                '_id': 'm_work_shirt_1',
+                'name': 'White Dress Shirt with Tie',
                 'category': 'Tops',
-                'color': colors[0],
+                'color': 'white',
                 'style': 'Work',
-                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text=Business+Shirt'
+                'imageUrl': 'https://placehold.co/300x400/FFFFFF/000000?text=Dress+Shirt+Tie'
             },
             {
-                '_id': f'm_work_{style}_2',
-                'name': 'Dress Trousers',
+                '_id': 'm_work_pants_2',
+                'name': 'Charcoal Suit Pants',
                 'category': 'Bottoms',
-                'color': 'navy',
+                'color': 'charcoal',
                 'style': 'Work',
-                'imageUrl': 'https://placehold.co/300x400/000080/white?text=Dress+Trousers'
+                'imageUrl': 'https://placehold.co/300x400/36454F/white?text=Suit+Pants'
             },
             {
-                '_id': f'm_work_{style}_3',
-                'name': 'Leather Loafers',
+                '_id': 'm_work_shoes_3',
+                'name': 'Black Oxford Shoes',
                 'category': 'Shoes',
-                'color': 'brown',
+                'color': 'black',
                 'style': 'Work',
-                'imageUrl': 'https://placehold.co/300x400/8B4513/white?text=Leather+Loafers'
+                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Oxford+Shoes'
             }
         ]
     elif style == 'party':
         return [
             {
-                '_id': f'm_party_{style}_1',
-                'name': 'Designer Shirt',
+                '_id': 'm_party_shirt_1',
+                'name': 'Black Silk Shirt',
                 'category': 'Tops',
-                'color': colors[0],
+                'color': 'black',
                 'style': 'Party',
-                'imageUrl': f'https://placehold.co/300x400/{colors[0]}/white?text=Designer+Shirt'
+                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Silk+Shirt'
             },
             {
-                '_id': f'm_party_{style}_2',
-                'name': 'Slim Chinos',
+                '_id': 'm_party_jeans_2',
+                'name': 'Dark Wash Skinny Jeans',
                 'category': 'Bottoms',
-                'color': 'black',
+                'color': 'dark_blue',
                 'style': 'Party',
-                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Slim+Chinos'
+                'imageUrl': 'https://placehold.co/300x400/191970/white?text=Skinny+Jeans'
             },
             {
-                '_id': f'm_party_{style}_3',
-                'name': 'Chelsea Boots',
+                '_id': 'm_party_boots_3',
+                'name': 'Brown Chelsea Boots',
                 'category': 'Shoes',
-                'color': 'black',
+                'color': 'brown',
                 'style': 'Party',
-                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Chelsea+Boots'
+                'imageUrl': 'https://placehold.co/300x400/8B4513/white?text=Chelsea+Boots'
             }
         ]
     else:  # formal
         return [
             {
-                '_id': f'm_formal_{style}_1',
-                'name': 'Tuxedo Jacket',
+                '_id': 'm_formal_tux_1',
+                'name': 'Black Tuxedo with Bow Tie',
                 'category': 'Tops',
                 'color': 'black',
                 'style': 'Formal',
-                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Tuxedo+Jacket'
+                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Tuxedo+Bow+Tie'
             },
             {
-                '_id': f'm_formal_{style}_2',
-                'name': 'Formal Trousers',
+                '_id': 'm_formal_pants_2',
+                'name': 'Black Tuxedo Pants',
                 'category': 'Bottoms',
                 'color': 'black',
                 'style': 'Formal',
-                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Formal+Trousers'
+                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Tuxedo+Pants'
             },
             {
-                '_id': f'm_formal_{style}_3',
-                'name': 'Patent Leather Shoes',
+                '_id': 'm_formal_shoes_3',
+                'name': 'Black Patent Dress Shoes',
                 'category': 'Shoes',
                 'color': 'black',
                 'style': 'Formal',
-                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Patent+Shoes'
+                'imageUrl': 'https://placehold.co/300x400/000000/white?text=Patent+Dress+Shoes'
             }
         ]
 
