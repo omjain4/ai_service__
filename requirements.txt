@@ -6,3 +6,5 @@ pillow
 scikit-learn
 tensorflow
 python-multipart
+requests
+google-generativeai
