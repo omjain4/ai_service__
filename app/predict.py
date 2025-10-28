@@ -1,4 +1,5 @@
-import numpy as np
+
+# amazonq-ignore-next-lineimport numpy as np
 import tensorflow as tf
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from PIL import Image
