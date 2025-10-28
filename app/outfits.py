@@ -117,32 +117,12 @@ def body_type_score(items, height, weight):
     return score / len(items)
 
 def generate_outfit(payload):
-    style_preference = payload.get('style', 'casual').lower()
-    height = payload.get('height', 170)
-    weight = payload.get('weight', 70)
-    body_color = payload.get('body_color', 'neutral').lower()
-    gender = payload.get('gender', 'female').lower()  # Default to female for better variety
+    """AI-powered outfit generation using StyleZAP deep learning model"""
+    from app.ai_model import ai_model
     
-    print(f"DEBUG: Received - Style: {style_preference}, Gender: {gender}, Height: {height}, Weight: {weight}, Skin: {body_color}")
-    
-    # Generate manual outfits based on parameters
-    outfits = get_manual_outfits(style_preference, height, weight, body_color, gender)
-    
-    print(f"DEBUG: Generated {len(outfits)} outfit items")
-    
-    return {
-        "userItems": [],
-        "suggestedItems": outfits,
-        "score": 5,
-        "message": f"Personalized {style_preference} outfits for {gender} with {body_color} skin tone",
-        "debug_info": {
-            "gender": gender,
-            "style": style_preference,
-            "body_type": body_type,
-            "height_cat": height_cat,
-            "colors": style_colors
-        }
-    }
+    # Process through AI model
+    result = ai_model.predict_outfit_compatibility(payload)
+    return result
 
 def get_manual_outfits(style, height, weight, skin_tone, gender):
     """Generate manual outfit suggestions based on parameters"""

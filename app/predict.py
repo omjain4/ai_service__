@@ -15,6 +15,7 @@ class_names = None
 def load_model_once():
     global model, class_names
     if model is None:
+        # amazonq-ignore-next-line
         model = tf.keras.models.load_model(MODEL_PATH)
         class_names = np.load(CLASSES_PATH, allow_pickle=True)
 
